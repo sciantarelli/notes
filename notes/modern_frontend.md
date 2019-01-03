@@ -90,6 +90,11 @@ plugins: [
 
 # React
 
+## Learning and Resources
+
+* https://reactjs.org/community/external-resources.html
+* [cra-with-ssr extensive resource](https://github.com/zhirzh/cra-with-ssr/tree/master/client#code-splitting)
+
 ## Frameworks
 
 ### create-react-app
@@ -116,6 +121,27 @@ Razzle is a tool that abstracts all complex configuration needed for SSR into a 
     * javascript stylesheets
     * modular stylesheets
     * stylized components ( emotion | glamorous | styled-components ). There may be corresponding React packages for these as well (react-emotion)
+
+      What’s a problem with “styled components”?
+        * Sometimes hard to overwrite a CSS framework you’re already using.
+        * If you’re new into styled components, you’ll likely connect application logic directly with styles. That’s incorrect.
+
+        Some recommendations when dealing with styled-components:
+
+        * Don’t make a styled component for every component in your app. Use styled-components only for reusable/generic components.
+        * HOCs could save you some time.
+        * Don’t mix logic props and UI props.
+
+## Optimizations
+
+* create-react-app
+    * to gzip, add entry to npm scripts
+        * "build-gzip": "find .\/build \\( -name '*.css' -o -name '*.js' \\) -exec gzip --verbose --keep {} \\;"
+        * [from here](https://askubuntu.com/questions/496432/gzip-all-files-with-specific-extensions)
+
+## Data Handling
+
+* [How to fetch data in React](https://www.robinwieruch.de/react-fetching-data)
 
 # Debugging
 
