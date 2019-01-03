@@ -28,15 +28,15 @@
 
 # To Do List
 
-* optimize SSR, assets, code splitting, css solutions
 
+* optimize SSR, code splitting, assets, css solutions, caching in browser. Review webpack topics and Udemy course to find other optimizations
+* get npm scripts cleaned up, analyze and get them right. Should testing be done with SSR?
 * try to get Node server w/ ssr running for devel
     * this may not be possible, it was suggested it's pointless anyway. I'm not sure about pointless, but maybe it's not vital, yeah.
     * testing should be done in production though with SSR I think...
     * see if I can get hot reloading working somehow
     * missing webpack stuff, hot reloading
     * for production, what about gzip?
-
 * Legal pad notes, consolidate
 * record_notes_revised.txt on Mac, finish consolidating that as well
 * Consider record-api notes, and whether to consolidate here or do something else
@@ -95,6 +95,10 @@
 1. npm run test (default test runner that runs saga tests)
 2. npm run testcafe (runs e2e tests, must run first: npm run start-for-test)
 
+**Analyze Bundles (for code splitting)
+1. npm run build-js -- --stats && webpack-bundle-analyzer build/bundle-stats.json
+
+
 
 ## Node Server and SSR
 
@@ -120,11 +124,41 @@ Here's another tutorial for [SSR data fetching w/ API](https://www.sitepoint.com
 
 
 ### Code Splitting and Cache Busting
-* **Simple examples around the internet don't usually include SSR considerations**
+
+Currently, some code splitting is being done.
+
+1. react-scripts version 2 automatically splits main and vendor. The vendor chunk is assigned a number, and is not called "vendor"
+2. Added a bit of my own splitting, which can be explored by browsing the components/async directory.
+
+Moving forward, here are some things to consider before any more splitting is done:
+
+1. It wasn't clear how to optimally split up the code, especially considering structural changes to come.
+2. The basic splitting in place doesn't account for reducers, actions, etc.
+3. Because notes data is loaded in Notes component, it would have to first load the "notes" chunk, then fetch the data. 2 trips to the server!
+4. I couldn't immediately think of a way to prevent the non-async components from being imported (like, by another dev who wouldn't know to use async)
+5. In the "notes" chunk, it currently includes the code for dataLoading and ActionsBar (and maybe others), but it shouldn't. This is because these components are not loaded anywhere else that would cause them to be loaded in "main" chunk. Before I combined the "note" and "notes" chunks into just "notes", these components were contained in both chunks. Here is my StackOverflow post on the matter: https://stackoverflow.com/questions/53965801/how-to-avoid-duplicate-code-in-chunks-using-cra-code-splitting
+6. Revisit resources below to help solve some of this.
+
+
+**React Resources**
+
+* Using react-loadable for this. Their docs show a simpler way to include script tags for the modules used in the SSR process (ie. Notes component), but that way doesn't work without being able to use the ReactLoadablePlugin (from react-loadable/webpack) because CRA doesn't have custom webpack config files
 * [Udemy discussion](https://www.udemy.com/server-side-rendering-with-react-and-redux/learn/v4/questions/2997916)
 * [upgrade create-react-app with ssr and code splitting](https://medium.com/bucharestjs/upgrading-a-create-react-app-project-to-a-ssr-code-splitting-setup-9da57df2040a)
+* [Effective Code Splitting in React](https://hackernoon.com/effective-code-splitting-in-react-a-practical-guide-2195359d5d49)
+    * shows chunking multiple components together
 * demonstrated in Udemy Webpack course
-* demonstrated here in conjunction [with React Router](https://serverless-stack.com/chapters/code-splitting-in-create-react-app.html)
+    * demonstrated here in conjunction [with React Router](https://serverless-stack.com/chapters/code-splitting-in-create-react-app.html)
+* react-loadable vs react-universal-component
+    * [reddit discussion](https://www.reddit.com/r/reactjs/comments/7gl794/reactuniversalcomponent_vs_reactloadable_vs/)
+    * I'm using react-loadable to start, but the Udemy webpack course used react-universal-component, and so does my react-webpack-starter repo
+
+**General Resources**
+
+* splitting reducers: https://stackoverflow.com/questions/32968016/how-to-dynamically-load-reducers-for-code-splitting-in-a-redux-application
+* [splitting vendor, each npm package into chunks](https://hackernoon.com/the-100-correct-way-to-split-your-chunks-with-webpack-f8a9df5b7758)
+* [Webpack Code Splitting using SplitChunksPlugin](https://itnext.io/react-router-and-webpack-v4-code-splitting-using-splitchunksplugin-f0a48f110312)
+    * demonstrates how to handle common imports to avoid duplication, but does it in webpack config file, so this won't work for CRA
 
 
 
@@ -220,8 +254,9 @@ Would like to do this at some point, not sure what the implementation would look
 **Testcafe Procedures**
 
 1. start test server with: npm run start-for-test
-2. The commands in package.json work, but **currently running all tests consecutively is failing**. Almost positive it's nothing I'm doing wrong, seems like the session gets disconnected partly through and causes the browser to logout incorrectly (because local storage "auth" is null)
-  * for now, run tests individually like such: testcafe "chrome" src/tests/e2e/notes.test.js
+2. start record-api test server
+3. The commands in package.json work, but **currently running all tests consecutively is failing**. Almost positive it's nothing I'm doing wrong, seems like the session gets disconnected partly through and causes the browser to logout incorrectly (because local storage "auth" is null)
+  * for now, run tests individually like such: testcafe "chrome" src/tests/e2e/notes.e2e.js
   * I tried running tests concurrently, but that didn't fix the issue either: testcafe -c 3 "chrome" src/tests/e2e
 
 
